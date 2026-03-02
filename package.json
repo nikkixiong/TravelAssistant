@@ -1,0 +1,16 @@
+{
+  "name": "hangzhou-tour-proxy",
+  "version": "1.0.0",
+  "description": "杭州旅游助手本地代理服务，作为 MiniMax-MCP 的 HTTP 中间层",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2"
+  }
+}

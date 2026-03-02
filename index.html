@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>中国旅游助手</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    }
+
+    #map-container {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* 顶部状态提示栏 */
+    #status-bar {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      padding: 10px 20px;
+      border-radius: 24px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      font-size: 14px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 90vw;
+      transition: opacity 0.3s ease;
+    }
+
+    #status-bar .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #52c41a;
+      flex-shrink: 0;
+      animation: pulse 1.5s infinite;
+    }
+
+    #status-bar .dot.loading { background: #1677ff; }
+    #status-bar .dot.error   { background: #ff4d4f; animation: none; }
+    #status-bar .dot.playing { background: #722ed1; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(1.3); }
+    }
+
+    /* ─── AI 导游词浮层 ────────────────────────────────────── */
+    #ai-guide-panel {
+      position: fixed;
+      top: 64px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 998;
+      width: calc(100% - 32px);
+      max-width: 480px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #fff;
+      border-radius: 16px;
+      padding: 14px 16px 16px;
+      box-shadow: 0 8px 32px rgba(15, 52, 96, 0.5);
+      display: none;
+      animation: aiSlideDown 0.3s ease;
+    }
+
+    @keyframes aiSlideDown {
+      from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .ai-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .ai-label {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.55);
+      letter-spacing: 0.5px;
+    }
+
+    .ai-close-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      border: none;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 13px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .ai-close-btn:hover { background: rgba(255, 255, 255, 0.22); }
+
+    #ai-poi-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    #ai-guide-text {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.88);
+      line-height: 1.75;
+      min-height: 20px;
+    }
+
+    /* 旋转加载圈 */
+    .ai-spinner {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      vertical-align: -2px;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── 底部景点面板 ─────────────────────────────────────── */
+    #poi-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 999;
+      background: rgba(255, 255, 255, 0.97);
+      backdrop-filter: blur(12px);
+      border-radius: 20px 20px 0 0;
+      box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+      padding: 16px 0 env(safe-area-inset-bottom, 0);
+      max-height: 42vh;
+      overflow: hidden;
+      display: none;
+    }
+
+    #poi-panel .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    #poi-panel .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    #poi-panel .panel-count {
+      font-size: 13px;
+      color: #888;
+    }
+
+    #poi-list {
+      overflow-y: auto;
+      max-height: calc(42vh - 56px);
+      padding: 8px 0;
+    }
+
+    .poi-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .poi-item:hover  { background: #f5f7fa; }
+    .poi-item.active { background: #e6f4ff; }
+    .poi-item.route-selected {
+      background: #f0f7ff;
+      border-left: 3px solid #1677ff;
+      padding-left: 17px;
+    }
+
+    .poi-index {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #ff4d4f;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-right: 12px;
+    }
+
+    .poi-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .poi-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1a1a1a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .poi-address {
+      font-size: 12px;
+      color: #999;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .poi-distance {
+      font-size: 12px;
+      color: #1677ff;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .poi-ai-icon {
+      font-size: 16px;
+      margin-left: 8px;
+      flex-shrink: 0;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+
+    .poi-item:hover .poi-ai-icon { opacity: 1; }
+
+    /* ─── 路线规划面板（高德风格） ───────────────────────────── */
+    #route-panel {
+      position: fixed;
+      top: 64px;
+      right: 16px;
+      z-index: 997;
+      width: min(360px, calc(100vw - 32px));
+      background: #4a8ff5;
+      border-radius: 12px;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    .route-mode-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 18px;
+      padding: 10px 0 4px;
+    }
+
+    .route-mode-tabs .active {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    #route-form-card {
+      margin: 8px 12px 10px;
+      padding: 10px;
+      background: rgba(50, 115, 220, 0.45);
+      border-radius: 10px;
+    }
+
+    .route-point-block {
+      position: relative;
+      display: grid;
+      gap: 8px;
+    }
+
+    .route-swap-btn {
+      position: absolute;
+      left: -6px;
+      top: 50%;
+      transform: translate(-100%, -50%);
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.25);
+      color: #fff;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 28px;
+      text-align: center;
+    }
+
+    .route-point-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+    }
+
+    .route-point-tag {
+      width: 22px;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.92);
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 600;
+      user-select: none;
+    }
+
+    .route-point-label {
+      width: 16px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+      user-select: none;
+    }
+
+    .route-point-input {
+      flex: 1;
+      height: 36px;
+      border: none;
+      border-radius: 6px;
+      padding: 0 10px;
+      outline: none;
+      background: rgba(255, 255, 255, 0.22);
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .route-point-input::placeholder {
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .route-point-remove {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.3);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      line-height: 24px;
+      padding: 0;
+    }
+
+    .route-via-add-btn {
+      border: none;
+      height: 30px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .route-action-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 10px 0 0;
+      gap: 8px;
+    }
+
+    .route-clear-link {
+      border: none;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.92);
+      font-size: 15px;
+      cursor: pointer;
+      padding: 0 4px;
+      white-space: nowrap;
+    }
+
+    #route-plan-btn {
+      border: none;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.24);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      height: 36px;
+      padding: 0 24px;
+      cursor: pointer;
+    }
+
+    #route-summary {
+      padding: 8px 14px 10px;
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    #route-result-panel {
+      max-height: 230px;
+      overflow: auto;
+      background: #fff;
+      border-top: 1px solid rgba(0, 0, 0, 0.04);
+      color: #333;
+      font-size: 13px;
+    }
+
+    #route-result-panel:empty {
+      display: none;
+    }
+
+    .amap-sug-result {
+      z-index: 1300 !important;
+    }
+
+    @media (max-width: 820px) {
+      #route-panel {
+        top: auto;
+        bottom: 120px;
+        left: 12px;
+        right: 12px;
+        width: auto;
+      }
+    }
+
+    /* ─── 城市选择弹层 ─────────────────────────────────────── */
+    #city-picker-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      background: rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    #city-picker {
+      width: min(460px, 100%);
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+      padding: 16px;
+    }
+
+    .city-picker-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 6px;
+    }
+
+    .city-picker-desc {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .city-picker-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    #city-input {
+      flex: 1;
+      border: 1px solid #d9d9d9;
+      border-radius: 8px;
+      height: 36px;
+      padding: 0 10px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    #city-input:focus {
+      border-color: #1677ff;
+      box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.15);
+    }
+
+    #city-confirm-btn {
+      border: none;
+      border-radius: 8px;
+      background: #1677ff;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 0 14px;
+      cursor: pointer;
+    }
+
+    #city-use-current-btn {
+      border: none;
+      border-radius: 8px;
+      background: #13c2c2;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 0 14px;
+      cursor: pointer;
+    }
+
+    .city-hot-list {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .city-hot-item {
+      border: 1px solid #d9d9d9;
+      background: #fafafa;
+      border-radius: 999px;
+      font-size: 12px;
+      color: #333;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="map-container"></div>
+
+  <div id="city-picker-mask">
+    <div id="city-picker">
+      <div class="city-picker-title">选择出发城市</div>
+      <div class="city-picker-desc">支持全国任意城市，例如：杭州、成都、哈尔滨、三亚。</div>
+      <div class="city-picker-row">
+        <input id="city-input" type="text" placeholder="请输入城市名" />
+        <button id="city-confirm-btn">进入地图</button>
+        <button id="city-use-current-btn">当前位置</button>
+      </div>
+      <div class="city-hot-list">
+        <button class="city-hot-item" data-city="北京">北京</button>
+        <button class="city-hot-item" data-city="上海">上海</button>
+        <button class="city-hot-item" data-city="广州">广州</button>
+        <button class="city-hot-item" data-city="深圳">深圳</button>
+        <button class="city-hot-item" data-city="杭州">杭州</button>
+        <button class="city-hot-item" data-city="成都">成都</button>
+        <button class="city-hot-item" data-city="重庆">重庆</button>
+        <button class="city-hot-item" data-city="西安">西安</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 顶部状态栏 -->
+  <div id="status-bar">
+    <span class="dot loading" id="status-dot"></span>
+    <span id="status-text">正在初始化地图…</span>
+  </div>
+
+  <!-- AI 导游词浮层（点击景点后出现） -->
+  <div id="ai-guide-panel">
+    <div class="ai-header">
+      <span class="ai-label">🤖 AI 导游</span>
+      <button class="ai-close-btn" id="ai-close-btn" title="关闭">✕</button>
+    </div>
+    <div id="ai-poi-name"></div>
+    <div id="ai-guide-text"></div>
+  </div>
+
+  <div id="route-panel">
+    <div class="route-mode-tabs">
+      <span class="active">🚗</span>
+      <span>🚌</span>
+      <span>🚶</span>
+    </div>
+    <div id="route-form-card">
+      <div class="route-point-block">
+        <button id="route-swap-btn" class="route-swap-btn" title="交换起终点">⇅</button>
+        <div class="route-point-row">
+          <span class="route-point-tag">•</span>
+          <span class="route-point-label">起</span>
+          <input id="route-start-input" class="route-point-input" type="text" placeholder="我的位置" value="我的位置" />
+        </div>
+        <div id="route-via-list"></div>
+        <button id="route-add-via-btn" class="route-via-add-btn">+ 添加途经点</button>
+        <div class="route-point-row">
+          <span class="route-point-tag">•</span>
+          <span class="route-point-label">终</span>
+          <input id="route-end-input" class="route-point-input" type="text" placeholder="请输入终点（全国可选）" />
+        </div>
+      </div>
+      <div class="route-action-row">
+        <button id="route-clear-btn" class="route-clear-link">清除路线</button>
+        <button id="route-plan-btn">开始导航</button>
+      </div>
+    </div>
+    <div id="route-summary">输入起点、途经点、终点后即可规划路线（支持全国任意地点）。</div>
+    <div id="route-result-panel"></div>
+  </div>
+
+  <!-- 底部景点列表面板 -->
+  <div id="poi-panel">
+    <div class="panel-header">
+      <span class="panel-title" id="poi-panel-title">景点推荐</span>
+      <span class="panel-count" id="poi-count"></span>
+    </div>
+    <div id="poi-list"></div>
+  </div>
+
+  <script>
+    // =====================================================================
+    // 高德地图安全密钥（必须在加载脚本前设置）
+    // =====================================================================
+    window._AMapSecurityConfig = {
+      securityJsCode: '332671a1b1c0cbbf47adf5df4a6b4708'
+    };
+
+    // =====================================================================
+    // 高德地图配置
+    // =====================================================================
+    const AMAP_KEY      = 'fe313412b83b5cb71336283bfad3c35f';
+    const DEFAULT_CENTER = [120.15507, 30.274084];
+    const DEFAULT_ZOOM   = 14;
+    const SEARCH_RADIUS  = 3000;
+    const MAX_POI_COUNT  = 10;
+    const POI_TYPE       = '050000';
+    const HOT_CITIES     = ['北京', '上海', '广州', '深圳', '杭州', '成都', '重庆', '西安'];
+
+    // =====================================================================
+    // 本地代理服务地址（server.js 监听的端口，API Key 保存在服务器 .env）
+    // =====================================================================
+    const PROXY_BASE = 'http://localhost:3001';
+
+    // =====================================================================
+    // 工具：更新顶部状态栏
+    // =====================================================================
+    function setStatus(text, type = 'loading') {
+      document.getElementById('status-dot').className  = 'dot ' + type;
+      document.getElementById('status-text').textContent = text;
+    }
+
+    // =====================================================================
+    // 工具：格式化距离
+    // =====================================================================
+    function formatDistance(meters) {
+      if (!meters && meters !== 0) return '';
+      return meters >= 1000
+        ? (meters / 1000).toFixed(1) + ' km'
+        : Math.round(meters) + ' m';
+    }
+
+    // =====================================================================
+    // AI 导游：更新浮层内容
+    // =====================================================================
+    function showAiPanel(poiName, text, loading = false) {
+      const panel  = document.getElementById('ai-guide-panel');
+      const nameEl = document.getElementById('ai-poi-name');
+      const textEl = document.getElementById('ai-guide-text');
+
+      nameEl.textContent = poiName;
+
+      if (loading) {
+        // 用 innerHTML 插入旋转圈（文字部分用 textContent 安全写入）
+        textEl.innerHTML = '';
+        const spinner = document.createElement('span');
+        spinner.className = 'ai-spinner';
+        const msg = document.createTextNode(text);
+        textEl.appendChild(spinner);
+        textEl.appendChild(msg);
+      } else {
+        textEl.textContent = text;
+      }
+
+      panel.style.display = 'block';
+    }
+
+    function hideAiPanel() {
+      document.getElementById('ai-guide-panel').style.display = 'none';
+    }
+
+    // =====================================================================
+    // 降级方案：当本地代理不可用时，使用浏览器原生 TTS 朗读景点名称
+    // =====================================================================
+    function fallbackToNativeTTS(poiName, guideText) {
+      if (!window.speechSynthesis) {
+        setStatus('AI 服务暂不可用，且浏览器不支持原生语音', 'error');
+        return;
+      }
+
+      // 打断浏览器上一段朗读
+      window.speechSynthesis.cancel();
+
+      const text      = guideText || `欢迎来到${poiName}，这里是杭州著名的风景名胜，快去探索吧！`;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang  = 'zh-CN';
+      utterance.rate  = 0.9;
+      utterance.pitch = 1;
+
+      // 尽量选择中文声音
+      const voices = window.speechSynthesis.getVoices();
+      const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+      if (zhVoice) utterance.voice = zhVoice;
+
+      utterance.onend   = () => setStatus('点击地图景点，听 AI 导游介绍', 'success');
+      utterance.onerror = () => setStatus('原生朗读出错', 'error');
+
+      window.speechSynthesis.speak(utterance);
+      setStatus(`🔊 正在为您播报【${poiName}】（浏览器原生朗读）`, 'playing');
+    }
+
+    // =====================================================================
+    // AI 导游核心：点击景点 → 调用本地代理 → 播放语音
+    //
+    // 调用链：
+    //   POST /api/speak { poiName }
+    //     → server.js 生成导游词 (LLM)
+    //     → server.js 生成语音 (MCP text_to_audio 或 REST API 降级)
+    //     → 返回 audio/mpeg 流 + X-Guide-Text 响应头
+    //   前端收到 blob → 播放
+    //
+    // 降级链（任一环节失败）：
+    //   网络/代理错误 → window.speechSynthesis 朗读景点名称
+    // =====================================================================
+    let _currentAudio = null;
+    let _map = null;
+    let _userPosition = null;
+    let _allPois = [];
+    let _isPoiLoading = false;
+    let _routePolyline = null;
+    let _routeOrderMarkers = [];
+    let _poiMarkers = [];
+    let _currentCity = '';
+    let _userMarker = null;
+    let _driving = null;
+    let _viaInputSeed = 0;
+
+    async function triggerAiGuide(poi) {
+      // 打断上一段语音（AI 音频 + 浏览器原生朗读均停止）
+      if (_currentAudio) {
+        _currentAudio.pause();
+        _currentAudio = null;
+      }
+      window.speechSynthesis?.cancel();
+
+      const poiName = poi.name;
+
+      // 高亮底部列表中对应的条目
+      document.querySelectorAll('.poi-item').forEach(el => el.classList.remove('active'));
+      const activeItem = document.querySelector(`.poi-item[data-poi-name="${CSS.escape(poiName)}"]`);
+      if (activeItem) activeItem.classList.add('active');
+
+      try {
+        // ── 阶段一：请求本地代理，等待 LLM + TTS 完成 ─────────────
+        setStatus('🤖 AI正在思考导游词…', 'loading');
+        showAiPanel(poiName, '正在生成导游词与语音，请稍候…', true);
+
+        const resp = await fetch(`${PROXY_BASE}/api/speak`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ poiName }),
+        });
+
+        if (!resp.ok) {
+          // 服务器返回了业务错误
+          const errData = await resp.json().catch(() => ({ error: `HTTP ${resp.status}` }));
+          throw new Error(errData.error || `代理服务异常 HTTP ${resp.status}`);
+        }
+
+        // ── 阶段二：从响应头提取导游词文本，从响应体提取音频 ────────
+        const encodedText = resp.headers.get('X-Guide-Text') ?? '';
+        const guideText   = encodedText ? decodeURIComponent(encodedText) : '';
+
+        console.log(`%c[AI导游] ${poiName}`, 'color:#722ed1;font-weight:bold;', guideText);
+        if (guideText) showAiPanel(poiName, guideText, false);
+
+        setStatus('🔊 AI正在生成语音…', 'loading');
+
+        const audioBlob = await resp.blob();
+        const audioUrl  = URL.createObjectURL(audioBlob);
+
+        // ── 阶段三：播放语音 ────────────────────────────────────────
+        setStatus(`🔊 正在为您播报【${poiName}】…`, 'playing');
+        _currentAudio = new Audio(audioUrl);
+
+        _currentAudio.play().catch(playErr => {
+          // 浏览器自动播放策略限制（点击手势触发通常不会触发此分支）
+          console.warn('[播放策略]', playErr);
+          setStatus('请再次点击景点以触发播放', 'error');
+        });
+
+        _currentAudio.addEventListener('ended', () => {
+          setStatus('点击地图景点，听 AI 导游介绍', 'success');
+          URL.revokeObjectURL(audioUrl);
+          _currentAudio = null;
+        });
+
+      } catch (err) {
+        console.error('[AI导游错误]', err);
+
+        const isNetworkErr = err instanceof TypeError; // fetch 本身失败（代理未启动等）
+        const hint = isNetworkErr
+          ? '本地代理未启动，请先运行 node server.js'
+          : err.message;
+
+        showAiPanel(
+          poiName,
+          `⚠️ AI 服务暂不可用（${hint}）\n已切换至浏览器原生语音朗读。`,
+          false,
+        );
+
+        // 降级：浏览器原生 TTS 朗读景点名称
+        fallbackToNativeTTS(poiName, '');
+      }
+    }
+
+    function asLngLat(point) {
+      if (!point) return null;
+      if (typeof point.getLng === 'function' && typeof point.getLat === 'function') return point;
+      return new AMap.LngLat(point.lng, point.lat);
+    }
+
+    function parseKeywords(raw) {
+      return raw
+        .split(/[，,、;；\s]+/)
+        .map(v => v.trim())
+        .filter(Boolean);
+    }
+
+    function clearRouteOverlay() {
+      if (_routePolyline && _map) {
+        _map.remove(_routePolyline);
+      }
+      _routePolyline = null;
+
+      if (_routeOrderMarkers.length && _map) {
+        _map.remove(_routeOrderMarkers);
+      }
+      _routeOrderMarkers = [];
+
+      document.querySelectorAll('.poi-item').forEach(el => el.classList.remove('route-selected'));
+      document.getElementById('route-summary').textContent = '从下方景点中搜索多个地点，系统会自动推荐游览顺序。';
+    }
+
+    function findPoisByKeywords(keywords, pois) {
+      const matched = [];
+      const missing = [];
+      const usedNames = new Set();
+
+      for (const keyword of keywords) {
+        const k = keyword.toLowerCase();
+        const poi = pois.find(p => {
+          if (usedNames.has(p.name)) return false;
+          const haystack = `${p.name} ${p.address || ''} ${p.pname || ''} ${p.cityname || ''} ${p.adname || ''}`.toLowerCase();
+          return haystack.includes(k);
+        });
+
+        if (poi) {
+          matched.push(poi);
+          usedNames.add(poi.name);
+        } else {
+          missing.push(keyword);
+        }
+      }
+
+      return { matched, missing };
+    }
+
+    function findSinglePoiByKeyword(keyword, pois, usedNames = new Set()) {
+      const k = keyword.trim().toLowerCase();
+      if (!k) return null;
+      return pois.find(p => {
+        if (usedNames.has(p.name)) return false;
+        const haystack = `${p.name} ${p.address || ''} ${p.pname || ''} ${p.cityname || ''} ${p.adname || ''}`.toLowerCase();
+        return haystack.includes(k);
+      }) || null;
+    }
+
+    function buildRecommendedOrder(selectedPois, startPoint) {
+      const remaining = [...selectedPois];
+      const ordered = [];
+      let current = asLngLat(startPoint);
+
+      if (!current && remaining.length > 0) {
+        const first = remaining.shift();
+        ordered.push(first);
+        current = new AMap.LngLat(first.location.lng, first.location.lat);
+      }
+
+      while (remaining.length > 0) {
+        let bestIndex = 0;
+        let bestDistance = Infinity;
+
+        for (let i = 0; i < remaining.length; i++) {
+          const target = new AMap.LngLat(remaining[i].location.lng, remaining[i].location.lat);
+          const distance = current ? AMap.GeometryUtil.distance(current, target) : 0;
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestIndex = i;
+          }
+        }
+
+        const nextPoi = remaining.splice(bestIndex, 1)[0];
+        ordered.push(nextPoi);
+        current = new AMap.LngLat(nextPoi.location.lng, nextPoi.location.lat);
+      }
+
+      return ordered;
+    }
+
+    function estimateRouteDistance(orderedPois, startPoint) {
+      if (!orderedPois.length) return 0;
+      let total = 0;
+      let current = asLngLat(startPoint);
+
+      if (current) {
+        total += AMap.GeometryUtil.distance(
+          current,
+          new AMap.LngLat(orderedPois[0].location.lng, orderedPois[0].location.lat)
+        );
+      }
+
+      for (let i = 0; i < orderedPois.length - 1; i++) {
+        const from = new AMap.LngLat(orderedPois[i].location.lng, orderedPois[i].location.lat);
+        const to = new AMap.LngLat(orderedPois[i + 1].location.lng, orderedPois[i + 1].location.lat);
+        total += AMap.GeometryUtil.distance(from, to);
+      }
+
+      return total;
+    }
+
+    function highlightRoutePois(orderedPois) {
+      document.querySelectorAll('.poi-item').forEach(el => el.classList.remove('route-selected'));
+      orderedPois.forEach(poi => {
+        const item = document.querySelector(`.poi-item[data-poi-name="${CSS.escape(poi.name)}"]`);
+        if (item) item.classList.add('route-selected');
+      });
+    }
+
+    function drawRecommendedRoute(orderedPois) {
+      clearRouteOverlay();
+      if (!_map || orderedPois.length < 2) return;
+
+      const routePath = orderedPois.map(poi => [poi.location.lng, poi.location.lat]);
+      if (_userPosition) {
+        const userLngLat = asLngLat(_userPosition);
+        routePath.unshift([userLngLat.getLng(), userLngLat.getLat()]);
+      }
+
+      _routePolyline = new AMap.Polyline({
+        path: routePath,
+        strokeColor: '#1677ff',
+        strokeWeight: 5,
+        strokeOpacity: 0.86,
+        lineJoin: 'round',
+      });
+      _map.add(_routePolyline);
+
+      _routeOrderMarkers = orderedPois.map((poi, index) => {
+        const marker = new AMap.Marker({
+          position: [poi.location.lng, poi.location.lat],
+          offset: new AMap.Pixel(-12, -12),
+          content: `
+            <div style="
+              width:24px;height:24px;border-radius:50%;
+              background:#1677ff;color:#fff;
+              font-size:12px;font-weight:700;
+              display:flex;align-items:center;justify-content:center;
+              border:2px solid #fff;box-shadow:0 2px 8px rgba(22,119,255,0.45);
+            ">${index + 1}</div>
+          `,
+        });
+        marker.on('click', () => triggerAiGuide(poi));
+        return marker;
+      });
+      _map.add(_routeOrderMarkers);
+
+      _map.setFitView([_routePolyline, ..._routeOrderMarkers], false, [80, 100, 260, 100]);
+      highlightRoutePois(orderedPois);
+    }
+
+    function recommendRouteByInput() {
+      const inputEl = document.getElementById('route-search-input');
+      const summaryEl = document.getElementById('route-summary');
+      const keywords = parseKeywords(inputEl.value);
+
+      if (_isPoiLoading) {
+        setStatus('景点仍在加载中，请稍候再试', 'loading');
+        return;
+      }
+      if (!_allPois.length) {
+        setStatus('当前没有可用景点，请先重新选择城市或定位', 'error');
+        return;
+      }
+      if (keywords.length < 2) {
+        setStatus('请至少输入 2 个地点（用逗号或空格分隔）', 'error');
+        return;
+      }
+
+      const { matched, missing } = findPoisByKeywords(keywords, _allPois);
+      if (matched.length < 2) {
+        setStatus('匹配到的地点不足 2 个，请调整关键词', 'error');
+        summaryEl.textContent = `未匹配成功：${missing.join('、') || '请检查输入关键词'}`;
+        return;
+      }
+
+      const ordered = buildRecommendedOrder(matched, _userPosition);
+      drawRecommendedRoute(ordered);
+
+      const totalDistance = estimateRouteDistance(ordered, _userPosition);
+      const routeText = ordered.map((poi, idx) => `${idx + 1}. ${poi.name}`).join(' → ');
+      const missingText = missing.length ? `\n未匹配：${missing.join('、')}` : '';
+      summaryEl.textContent =
+        `推荐顺序：${routeText}\n预计直线总距离：${formatDistance(totalDistance)}${missingText}`;
+
+      setStatus(`已为你推荐 ${ordered.length} 个地点的游览路线`, 'success');
+    }
+
+    function planRouteByStops() {
+      const startRaw = document.getElementById('route-start-input').value.trim();
+      const viaRaw = document.getElementById('route-via-input').value.trim();
+      const endRaw = document.getElementById('route-end-input').value.trim();
+      const summaryEl = document.getElementById('route-summary');
+
+      if (_isPoiLoading) {
+        setStatus('景点仍在加载中，请稍候再试', 'loading');
+        return;
+      }
+      if (!_allPois.length) {
+        setStatus('当前没有可用景点，请先重新选择城市或定位', 'error');
+        return;
+      }
+      if (!endRaw) {
+        setStatus('请至少填写终点', 'error');
+        return;
+      }
+
+      const usedNames = new Set();
+      const routePois = [];
+      const missing = [];
+      let customStartPoint = _userPosition;
+      let startLabel = '当前位置';
+
+      if (startRaw && startRaw !== '当前位置') {
+        const startPoi = findSinglePoiByKeyword(startRaw, _allPois, usedNames);
+        if (startPoi) {
+          routePois.push(startPoi);
+          usedNames.add(startPoi.name);
+          customStartPoint = new AMap.LngLat(startPoi.location.lng, startPoi.location.lat);
+          startLabel = startPoi.name;
+        } else {
+          missing.push(`起点:${startRaw}`);
+        }
+      }
+
+      const viaKeywords = parseKeywords(viaRaw);
+      viaKeywords.forEach(via => {
+        const poi = findSinglePoiByKeyword(via, _allPois, usedNames);
+        if (poi) {
+          routePois.push(poi);
+          usedNames.add(poi.name);
+        } else {
+          missing.push(`途径:${via}`);
+        }
+      });
+
+      const endPoi = findSinglePoiByKeyword(endRaw, _allPois, usedNames);
+      if (!endPoi) {
+        missing.push(`终点:${endRaw}`);
+      } else {
+        routePois.push(endPoi);
+      }
+
+      if (routePois.length < 1 || !endPoi) {
+        setStatus('无法完成路线规划，请检查起终点是否在推荐景点中', 'error');
+        summaryEl.textContent = `未匹配：${missing.join('、') || '请检查输入'}`;
+        return;
+      }
+
+      drawRecommendedRoute(routePois);
+      if (_routePolyline && _userPosition && startRaw && startRaw !== '当前位置') {
+        // 指定了非当前位置起点时，重绘一条不经过当前位置的路线
+        _map.remove(_routePolyline);
+        const routePath = routePois.map(p => [p.location.lng, p.location.lat]);
+        _routePolyline = new AMap.Polyline({
+          path: routePath,
+          strokeColor: '#722ed1',
+          strokeWeight: 5,
+          strokeOpacity: 0.9,
+          lineJoin: 'round',
+        });
+        _map.add(_routePolyline);
+        _map.setFitView([_routePolyline, ..._routeOrderMarkers], false, [80, 100, 260, 100]);
+      }
+
+      const distance = estimateRouteDistance(routePois, startRaw && startRaw !== '当前位置' ? customStartPoint : _userPosition);
+      const routeText = routePois.map((poi, idx) => `${idx + 1}. ${poi.name}`).join(' → ');
+      const missingText = missing.length ? `\n未匹配：${missing.join('、')}` : '';
+      summaryEl.textContent = `起点：${startLabel}\n路线：${routeText}\n预计直线总距离：${formatDistance(distance)}${missingText}`;
+
+      setStatus('已按指定起点/途径点/终点完成路线规划', 'success');
+    }
+
+    function bindRouteEvents() {
+      const inputEl = document.getElementById('route-search-input');
+      const recommendBtn = document.getElementById('route-recommend-btn');
+      const clearBtn = document.getElementById('route-clear-btn');
+      const planBtn = document.getElementById('route-plan-btn');
+
+      recommendBtn.addEventListener('click', recommendRouteByInput);
+      planBtn.addEventListener('click', planRouteByStops);
+      clearBtn.addEventListener('click', () => {
+        inputEl.value = '';
+        document.getElementById('route-start-input').value = '';
+        document.getElementById('route-via-input').value = '';
+        document.getElementById('route-end-input').value = '';
+        clearRouteOverlay();
+        setStatus('路线已清除，可重新搜索多个地点', 'success');
+      });
+      inputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') recommendRouteByInput();
+      });
+    }
+
+    // =====================================================================
+    // 页面入口：先选择城市
+    // =====================================================================
+    function selectCityOnEnter() {
+      return new Promise((resolve) => {
+        const mask = document.getElementById('city-picker-mask');
+        const input = document.getElementById('city-input');
+        const confirmBtn = document.getElementById('city-confirm-btn');
+        const currentBtn = document.getElementById('city-use-current-btn');
+        const hotBtns = document.querySelectorAll('.city-hot-item');
+
+        hotBtns.forEach(btn => {
+          btn.addEventListener('click', () => {
+            input.value = btn.dataset.city || '';
+            input.focus();
+          });
+        });
+
+        const submit = () => {
+          const city = input.value.trim();
+          if (!city) {
+            setStatus('请输入城市名后再进入地图', 'error');
+            return;
+          }
+          mask.style.display = 'none';
+          resolve({ mode: 'city', city });
+        };
+
+        const useCurrent = () => {
+          mask.style.display = 'none';
+          resolve({ mode: 'current' });
+        };
+
+        confirmBtn.addEventListener('click', submit);
+        currentBtn.addEventListener('click', useCurrent);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') submit();
+        });
+
+        input.value = HOT_CITIES[4];
+        input.focus();
+      });
+    }
+
+    async function loadCityScenicData(map, cityName) {
+      clearRouteOverlay();
+      hideAiPanel();
+      _isPoiLoading = true;
+      _allPois = [];
+      document.getElementById('route-start-input').value = '我的位置';
+      document.getElementById('route-end-input').value = '';
+      document.getElementById('route-via-list').innerHTML = '';
+
+      try {
+        setStatus(`正在定位 ${cityName}…`, 'loading');
+        const center = await resolveCityCenter(cityName);
+
+        map.setCenter(center);
+        map.setZoom(12);
+
+        _userPosition = center;
+        addUserMarker(map, center, `${cityName}中心`);
+
+        setStatus(`正在搜索 ${cityName} 景点…`, 'loading');
+        const pois = await searchCityScenic(map, cityName);
+        if (!pois || pois.length === 0) {
+          throw new Error(`未找到 ${cityName} 相关景点`);
+        }
+
+        _currentCity = cityName;
+        _allPois = pois.slice(0, MAX_POI_COUNT);
+        addPoiMarkers(map, _allPois);
+        renderPoiPanel(_allPois, _userPosition);
+        extractAndLogPoiData(_allPois, _userPosition);
+        document.getElementById('poi-panel-title').textContent = `${cityName} 景点推荐`;
+
+        setStatus(`已为你推荐 ${_allPois.length} 个${cityName}景点，可继续搜索路线`, 'success');
+      } finally {
+        _isPoiLoading = false;
+      }
+    }
+
+    // =====================================================================
+    // 动态加载高德 JS API 2.0
+    // =====================================================================
+    function loadAMapScript() {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `https://webapi.amap.com/maps?v=2.0&key=${AMAP_KEY}&plugin=AMap.Geolocation,AMap.PlaceSearch,AMap.DistrictSearch,AMap.Geocoder,AMap.AutoComplete,AMap.Driving`;
+        script.onload  = resolve;
+        script.onerror = () => reject(new Error('高德地图脚本加载失败，请检查网络或 Key 是否有效'));
+        document.head.appendChild(script);
+      });
+    }
+
+    // =====================================================================
+    // 初始化地图
+    // =====================================================================
+    function initMap() {
+      return new AMap.Map('map-container', {
+        center: DEFAULT_CENTER,
+        zoom:   DEFAULT_ZOOM,
+        mapStyle: 'amap://styles/fresh'
+      });
+    }
+
+    // =====================================================================
+    // 获取用户当前位置（返回 Promise<LngLat | null>）
+    // =====================================================================
+    function getUserLocation(map) {
+      return new Promise((resolve) => {
+        const geolocation = new AMap.Geolocation({
+          enableHighAccuracy: true,
+          timeout: 8000,
+          buttonOffset: new AMap.Pixel(10, 20),
+          zoomToAccuracy: true
+        });
+
+        map.addControl(geolocation);
+
+        geolocation.getCurrentPosition((status, result) => {
+          if (status === 'complete') {
+            console.log('[定位成功]', result);
+            resolve(result.position);
+          } else {
+            console.warn('[定位失败]', result.message || result);
+            resolve(null);
+          }
+        });
+      });
+    }
+
+    // =====================================================================
+    // 在地图上打蓝色"我的位置"标记
+    // =====================================================================
+    function addUserMarker(map, position, title = '我的位置') {
+      if (_userMarker) {
+        map.remove(_userMarker);
+      }
+
+      const marker = new AMap.Marker({
+        position,
+        title,
+        content: `
+          <div style="
+            width:18px; height:18px; border-radius:50%;
+            background:#1677ff; border:3px solid #fff;
+            box-shadow:0 0 0 4px rgba(22,119,255,0.3);
+          "></div>
+        `,
+        offset: new AMap.Pixel(-9, -9)
+      });
+      _userMarker = marker;
+      map.add(marker);
+    }
+
+    // =====================================================================
+    // 解析城市中心点，返回 Promise<LngLat>
+    // =====================================================================
+    function resolveCityCenter(cityName) {
+      return new Promise((resolve, reject) => {
+        const districtSearch = new AMap.DistrictSearch({
+          level: 'city',
+          subdistrict: 0,
+          extensions: 'base',
+        });
+
+        districtSearch.search(cityName, (status, result) => {
+          if (status === 'complete' && result?.districtList?.length) {
+            const center = result.districtList[0].center;
+            if (center) {
+              resolve(center);
+              return;
+            }
+          }
+          reject(new Error('城市解析失败：' + cityName));
+        });
+      });
+    }
+
+    // =====================================================================
+    // 按城市搜索景点，返回 Promise<POI[]>
+    // =====================================================================
+    function searchCityScenic(map, cityName) {
+      return new Promise((resolve, reject) => {
+        const placeSearch = new AMap.PlaceSearch({
+          type:      POI_TYPE,
+          pageSize:  MAX_POI_COUNT,
+          pageIndex: 1,
+          city: cityName,
+          citylimit: true,
+          map
+        });
+
+        placeSearch.search('风景名胜', (status, result) => {
+          if (status === 'complete' && result.info === 'OK') {
+            resolve(result.poiList.pois || []);
+          } else {
+            reject(new Error('PlaceSearch 搜索失败：' + (result.info || status)));
+          }
+        });
+      });
+    }
+
+    function searchNearbyScenicByKeyword(map, center, keyword, radius, type = POI_TYPE) {
+      return new Promise((resolve, reject) => {
+        const placeSearch = new AMap.PlaceSearch({
+          type,
+          pageSize:  MAX_POI_COUNT,
+          pageIndex: 1,
+          map
+        });
+
+        placeSearch.searchNearBy(keyword, center, radius, (status, result) => {
+          if (status === 'complete' && result.info === 'OK') {
+            resolve(result.poiList.pois || []);
+          } else if (status === 'no_data' || String(result?.info || '').toLowerCase() === 'no_data') {
+            resolve([]);
+          } else {
+            reject(new Error('PlaceSearch 附近搜索失败：' + (result.info || status)));
+          }
+        });
+      });
+    }
+
+    function resolveCityByLocation(position) {
+      return new Promise((resolve) => {
+        const geocoder = new AMap.Geocoder({ radius: 1000, extensions: 'base' });
+        geocoder.getAddress(position, (status, result) => {
+          if (status === 'complete' && result?.regeocode?.addressComponent) {
+            const comp = result.regeocode.addressComponent;
+            const city = Array.isArray(comp.city) ? comp.city[0] : comp.city;
+            resolve(city || comp.province || '');
+            return;
+          }
+          resolve('');
+        });
+      });
+    }
+
+    async function searchNearbyScenic(map, center) {
+      const attempts = [
+        { keyword: '风景名胜', radius: SEARCH_RADIUS, type: POI_TYPE },
+        { keyword: '旅游景点', radius: 6000, type: '' },
+        { keyword: '景点', radius: 8000, type: '' }
+      ];
+
+      for (const attempt of attempts) {
+        const pois = await searchNearbyScenicByKeyword(
+          map,
+          center,
+          attempt.keyword,
+          attempt.radius,
+          attempt.type
+        );
+        if (pois.length > 0) {
+          return pois;
+        }
+      }
+
+      const cityName = await resolveCityByLocation(center);
+      if (cityName) {
+        const cityPois = await searchCityScenic(map, cityName).catch(() => []);
+        if (cityPois.length > 0) {
+          return cityPois;
+        }
+      }
+
+      throw new Error('附近暂无景点数据，请切换城市搜索');
+    }
+
+    async function loadNearbyScenicData(map) {
+      clearRouteOverlay();
+      hideAiPanel();
+      _isPoiLoading = true;
+      _allPois = [];
+      document.getElementById('route-start-input').value = '我的位置';
+      document.getElementById('route-end-input').value = '';
+      document.getElementById('route-via-list').innerHTML = '';
+
+      try {
+        setStatus('正在获取当前位置…', 'loading');
+        const position = await getUserLocation(map);
+        if (!position) {
+          throw new Error('无法获取当前位置，请改用城市搜索');
+        }
+
+        _currentCity = '当前位置';
+        _userPosition = position;
+        map.setCenter(position);
+        map.setZoom(13);
+        addUserMarker(map, position, '我的位置');
+
+        setStatus('正在推荐当前位置周边景点…', 'loading');
+        const pois = await searchNearbyScenic(map, position);
+        if (!pois || pois.length === 0) {
+          throw new Error('附近未找到景点');
+        }
+
+        _allPois = pois.slice(0, MAX_POI_COUNT);
+        addPoiMarkers(map, _allPois);
+        renderPoiPanel(_allPois, _userPosition);
+        extractAndLogPoiData(_allPois, _userPosition);
+        document.getElementById('poi-panel-title').textContent = '当前位置景点推荐';
+        setStatus(`已为你推荐 ${_allPois.length} 个附近景点，可规划起终点路线`, 'success');
+      } finally {
+        _isPoiLoading = false;
+      }
+    }
+
+    // =====================================================================
+    // 在地图上为每个 POI 打红色 Marker，点击时触发 AI 导游
+    // =====================================================================
+    function addPoiMarkers(map, pois) {
+      if (_poiMarkers.length) {
+        map.remove(_poiMarkers);
+      }
+      _poiMarkers = [];
+
+      pois.forEach((poi, index) => {
+        const marker = new AMap.Marker({
+          position: [poi.location.lng, poi.location.lat],
+          title:    poi.name,
+          label: {
+            content: `<div style="
+              background:#ff4d4f; color:#fff; padding:2px 8px;
+              border-radius:10px; font-size:12px; font-weight:600;
+              box-shadow:0 2px 6px rgba(255,77,79,0.4);
+              white-space:nowrap;
+            ">${index + 1}. ${poi.name}</div>`,
+            offset:    new AMap.Pixel(0, -32),
+            direction: 'top'
+          },
+          content: `
+            <div style="
+              width:26px; height:26px; border-radius:50%;
+              background:#ff4d4f; color:#fff;
+              font-size:12px; font-weight:700;
+              display:flex; align-items:center; justify-content:center;
+              border:2px solid #fff;
+              box-shadow:0 2px 8px rgba(255,77,79,0.5);
+              cursor:pointer;
+            ">${index + 1}</div>
+          `,
+          offset: new AMap.Pixel(-13, -13)
+        });
+
+        marker.on('click', () => {
+          map.setCenter([poi.location.lng, poi.location.lat]);
+          triggerAiGuide(poi);
+        });
+
+        _poiMarkers.push(marker);
+        map.add(marker);
+      });
+    }
+
+    // =====================================================================
+    // 渲染底部景点列表面板，点击条目时触发 AI 导游
+    // =====================================================================
+    function renderPoiPanel(pois, userPosition) {
+      const panel   = document.getElementById('poi-panel');
+      const list    = document.getElementById('poi-list');
+      const counter = document.getElementById('poi-count');
+
+      counter.textContent = `共 ${pois.length} 处`;
+      list.innerHTML = '';
+
+      pois.forEach((poi, index) => {
+        const distance = userPosition
+          ? AMap.GeometryUtil.distance(
+              userPosition,
+              new AMap.LngLat(poi.location.lng, poi.location.lat)
+            )
+          : poi.distance;
+
+        const item = document.createElement('div');
+        item.className = 'poi-item';
+        // data 属性用于点击后高亮回显
+        item.dataset.poiName = poi.name;
+        item.innerHTML = `
+          <div class="poi-index">${index + 1}</div>
+          <div class="poi-info">
+            <div class="poi-name">${poi.name}</div>
+            <div class="poi-address">${poi.address || poi.pname + poi.cityname + poi.adname}</div>
+          </div>
+          ${distance ? `<div class="poi-distance">${formatDistance(distance)}</div>` : ''}
+          <span class="poi-ai-icon" title="点击听 AI 导游">🎙️</span>
+        `;
+
+        item.addEventListener('click', () => {
+          triggerAiGuide(poi);
+        });
+
+        list.appendChild(item);
+      });
+
+      panel.style.display = 'block';
+    }
+
+    // =====================================================================
+    // 提取 POI 结构化数据并打印（可直接作为大模型 Prompt 上下文）
+    // =====================================================================
+    function extractAndLogPoiData(pois, userPosition) {
+      const poiData = pois.map((poi, index) => {
+        const distance = userPosition
+          ? Math.round(
+              AMap.GeometryUtil.distance(
+                userPosition,
+                new AMap.LngLat(poi.location.lng, poi.location.lat)
+              )
+            )
+          : (poi.distance ? Number(poi.distance) : null);
+
+        return {
+          index:    index + 1,
+          name:     poi.name,
+          type:     poi.type,
+          typecode: poi.typecode,
+          address:  poi.address || (poi.pname + poi.cityname + poi.adname),
+          location: { lng: poi.location.lng, lat: poi.location.lat },
+          distance_meters: distance,
+          tel:     poi.tel      || null,
+          website: poi.website  || null,
+          rating:  poi.biz_ext?.rating || null,
+          cost:    poi.biz_ext?.cost   || null
+        };
+      });
+
+      console.log(
+        '%c[旅游助手] 周边风景名胜数据（可用于大模型 Prompt）',
+        'color:#1677ff; font-weight:bold; font-size:14px;'
+      );
+      console.log(JSON.stringify(poiData, null, 2));
+      return poiData;
+    }
+
+    // =====================================================================
+    // 路线规划（全国任意地点 + 多途经点）
+    // =====================================================================
+    function clearInputGeoData(inputEl) {
+      if (!inputEl) return;
+      delete inputEl.dataset.placeLng;
+      delete inputEl.dataset.placeLat;
+      delete inputEl.dataset.placeName;
+    }
+
+    function setInputGeoData(inputEl, name, location) {
+      if (!inputEl || !location) return;
+      inputEl.dataset.placeLng = String(location.lng);
+      inputEl.dataset.placeLat = String(location.lat);
+      inputEl.dataset.placeName = name || inputEl.value.trim();
+    }
+
+    function bindAutoComplete(inputEl) {
+      if (!inputEl || !inputEl.id) return;
+      const autoComplete = new AMap.AutoComplete({
+        input: inputEl.id,
+        city: '全国',
+        citylimit: false
+      });
+      autoComplete.on('select', ({ poi }) => {
+        if (!poi) return;
+        if (poi.name) inputEl.value = poi.name;
+        if (poi.location) {
+          setInputGeoData(inputEl, poi.name || inputEl.value.trim(), poi.location);
+        } else {
+          clearInputGeoData(inputEl);
+        }
+      });
+      inputEl.addEventListener('input', () => clearInputGeoData(inputEl));
+    }
+
+    function createViaInputRow() {
+      _viaInputSeed += 1;
+      const row = document.createElement('div');
+      row.className = 'route-point-row';
+      row.innerHTML = `
+        <span class="route-point-tag">•</span>
+        <span class="route-point-label">经</span>
+        <input id="route-via-input-${_viaInputSeed}" class="route-point-input route-via-input" type="text" placeholder="请输入途经点（全国可选）" />
+        <button class="route-point-remove" title="删除途经点">−</button>
+      `;
+
+      const inputEl = row.querySelector('input');
+      const removeBtn = row.querySelector('button');
+      bindAutoComplete(inputEl);
+      removeBtn.addEventListener('click', () => row.remove());
+      return row;
+    }
+
+    function resetRouteInputs() {
+      const startInput = document.getElementById('route-start-input');
+      const endInput = document.getElementById('route-end-input');
+      const viaList = document.getElementById('route-via-list');
+      startInput.value = '我的位置';
+      endInput.value = '';
+      clearInputGeoData(startInput);
+      clearInputGeoData(endInput);
+      viaList.innerHTML = '';
+    }
+
+    async function searchPlaceByKeyword(keyword) {
+      return new Promise((resolve, reject) => {
+        const placeSearch = new AMap.PlaceSearch({
+          city: '全国',
+          citylimit: false,
+          pageSize: 1,
+          pageIndex: 1
+        });
+        placeSearch.search(keyword, (status, result) => {
+          const first = result?.poiList?.pois?.[0];
+          if (status === 'complete' && result?.info === 'OK' && first?.location) {
+            resolve({
+              name: first.name || keyword,
+              location: first.location
+            });
+            return;
+          }
+          reject(new Error(`未找到地点：${keyword}`));
+        });
+      });
+    }
+
+    async function resolveRouteInput(inputEl, label, { required = false, allowCurrent = false } = {}) {
+      const raw = inputEl.value.trim();
+      if (!raw) {
+        if (allowCurrent && _userPosition) {
+          return { name: '我的位置', location: asLngLat(_userPosition) };
+        }
+        if (required) throw new Error(`请填写${label}`);
+        return null;
+      }
+
+      if ((raw === '我的位置' || raw === '当前位置') && allowCurrent) {
+        if (!_userPosition) throw new Error('当前定位不可用，请输入具体起点');
+        return { name: '我的位置', location: asLngLat(_userPosition) };
+      }
+
+      if (inputEl.dataset.placeLng && inputEl.dataset.placeLat) {
+        return {
+          name: inputEl.dataset.placeName || raw,
+          location: new AMap.LngLat(Number(inputEl.dataset.placeLng), Number(inputEl.dataset.placeLat))
+        };
+      }
+
+      const resolved = await searchPlaceByKeyword(raw);
+      inputEl.value = resolved.name;
+      setInputGeoData(inputEl, resolved.name, resolved.location);
+      return resolved;
+    }
+
+    function searchDrivingRoute(start, end, waypoints) {
+      return new Promise((resolve, reject) => {
+        if (!_driving) {
+          _driving = new AMap.Driving({
+            map: _map,
+            panel: 'route-result-panel',
+            policy: AMap.DrivingPolicy.LEAST_TIME,
+            autoFitView: true,
+            hideMarkers: false,
+            showTraffic: true
+          });
+        }
+
+        _driving.search(start, end, { waypoints }, (status, result) => {
+          if (status === 'complete' && result?.routes?.length) {
+            resolve(result);
+            return;
+          }
+          reject(new Error('驾车路线规划失败，请更换地点后重试'));
+        });
+      });
+    }
+
+    function clearRouteOverlay() {
+      if (_driving) {
+        _driving.clear();
+      }
+      if (_routePolyline && _map) {
+        _map.remove(_routePolyline);
+      }
+      _routePolyline = null;
+
+      if (_routeOrderMarkers.length && _map) {
+        _map.remove(_routeOrderMarkers);
+      }
+      _routeOrderMarkers = [];
+
+      document.querySelectorAll('.poi-item').forEach(el => el.classList.remove('route-selected'));
+      document.getElementById('route-summary').textContent = '输入起点、途经点、终点后即可规划路线（支持全国任意地点）。';
+      document.getElementById('route-result-panel').innerHTML = '';
+    }
+
+    async function planRouteByStops() {
+      if (_isPoiLoading) {
+        setStatus('景点仍在加载中，请稍候再试', 'loading');
+        return;
+      }
+
+      const summaryEl = document.getElementById('route-summary');
+      const startInput = document.getElementById('route-start-input');
+      const endInput = document.getElementById('route-end-input');
+      const viaInputs = Array.from(document.querySelectorAll('.route-via-input'));
+
+      try {
+        setStatus('正在规划驾车路线…', 'loading');
+        const start = await resolveRouteInput(startInput, '起点', { allowCurrent: true });
+        const end = await resolveRouteInput(endInput, '终点', { required: true });
+        const waypointPoints = [];
+
+        for (const viaInput of viaInputs) {
+          if (!viaInput.value.trim()) continue;
+          const point = await resolveRouteInput(viaInput, '途经点');
+          if (point) waypointPoints.push(point);
+        }
+
+        clearRouteOverlay();
+        const result = await searchDrivingRoute(
+          start.location,
+          end.location,
+          waypointPoints.map(p => p.location)
+        );
+
+        const route = result.routes[0];
+        const viaText = waypointPoints.length ? `\n途经：${waypointPoints.map(v => v.name).join(' → ')}` : '';
+        summaryEl.textContent = `起点：${start.name}\n终点：${end.name}${viaText}\n预计：约${Math.round(route.time / 60)}分钟 · ${(route.distance / 1000).toFixed(1)}公里`;
+        setStatus('路线规划完成，可查看详细方案', 'success');
+      } catch (err) {
+        summaryEl.textContent = err.message;
+        setStatus(err.message, 'error');
+      }
+    }
+
+    function bindRouteEvents() {
+      const startInput = document.getElementById('route-start-input');
+      const endInput = document.getElementById('route-end-input');
+      const viaList = document.getElementById('route-via-list');
+      const addViaBtn = document.getElementById('route-add-via-btn');
+      const swapBtn = document.getElementById('route-swap-btn');
+      const clearBtn = document.getElementById('route-clear-btn');
+      const planBtn = document.getElementById('route-plan-btn');
+
+      bindAutoComplete(startInput);
+      bindAutoComplete(endInput);
+
+      addViaBtn.addEventListener('click', () => {
+        viaList.appendChild(createViaInputRow());
+      });
+
+      swapBtn.addEventListener('click', () => {
+        const startValue = startInput.value;
+        const endValue = endInput.value;
+        const startData = { ...startInput.dataset };
+        const endData = { ...endInput.dataset };
+
+        startInput.value = endValue;
+        endInput.value = startValue;
+        clearInputGeoData(startInput);
+        clearInputGeoData(endInput);
+
+        if (endData.placeLng && endData.placeLat) {
+          setInputGeoData(startInput, endData.placeName || startInput.value, {
+            lng: Number(endData.placeLng),
+            lat: Number(endData.placeLat)
+          });
+        }
+        if (startData.placeLng && startData.placeLat) {
+          setInputGeoData(endInput, startData.placeName || endInput.value, {
+            lng: Number(startData.placeLng),
+            lat: Number(startData.placeLat)
+          });
+        }
+      });
+
+      clearBtn.addEventListener('click', () => {
+        resetRouteInputs();
+        clearRouteOverlay();
+        setStatus('路线已清除，请重新输入起终点', 'success');
+      });
+
+      planBtn.addEventListener('click', planRouteByStops);
+      [startInput, endInput].forEach(input => {
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') planRouteByStops();
+        });
+      });
+    }
+
+    // =====================================================================
+    // 主流程
+    // =====================================================================
+    async function main() {
+      // 关闭按钮
+      document.getElementById('ai-close-btn').addEventListener('click', () => {
+        hideAiPanel();
+        if (_currentAudio) {
+          _currentAudio.pause();
+          _currentAudio = null;
+        }
+        setStatus('点击地图景点，听 AI 导游介绍', 'success');
+      });
+
+      try {
+        setStatus('正在加载地图资源…', 'loading');
+        await loadAMapScript();
+
+        setStatus('正在初始化地图…', 'loading');
+        const map = initMap();
+        _map = map;
+        bindRouteEvents();
+        setStatus('请选择城市或使用当前位置', 'loading');
+        const selection = await selectCityOnEnter();
+        if (selection.mode === 'current') {
+          await loadNearbyScenicData(map);
+        } else {
+          await loadCityScenicData(map, selection.city);
+        }
+
+      } catch (err) {
+        console.error('[致命错误]', err);
+        setStatus('地图加载失败：' + err.message, 'error');
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>
