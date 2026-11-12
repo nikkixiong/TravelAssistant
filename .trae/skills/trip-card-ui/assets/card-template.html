@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{{title}}</title>
+<style>
+  :root { --ink:#1f2a2e; --muted:#6b7a80; --lake:#2f7d74; --lake-soft:#e6f2ef; --paper:#fbfaf6; --line:#e4e1d8; --warn:#b45309; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; line-height:1.6; }
+  .wrap { max-width:520px; margin:0 auto; padding:20px 16px 40px; }
+  .kicker { color:var(--lake); font-size:13px; letter-spacing:.08em; }
+  h1 { font-size:24px; margin:4px 0 6px; }
+  .meta { color:var(--muted); font-size:14px; }
+  .stats { display:flex; gap:10px; margin:16px 0; }
+  .stat { flex:1; background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  .stat b { display:block; font-size:20px; }
+  .stat span { color:var(--muted); font-size:12px; }
+  .summary { background:var(--lake-soft); border-radius:12px; padding:14px; margin:16px 0; }
+  ol { list-style:none; padding:0; margin:0; }
+  .stop { background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .stop .time { color:var(--lake); font-weight:600; font-size:14px; }
+  .stop .name { font-size:17px; font-weight:600; }
+  .stop .note { color:var(--muted); font-size:13px; }
+  .leg { color:var(--muted); font-size:13px; padding:6px 0 6px 18px; border-left:2px dashed var(--line); margin-left:14px; }
+  .leg a { color:var(--lake); }
+  .assume { font-size:13px; color:var(--muted); margin-top:16px; }
+  .btn { display:block; text-align:center; background:var(--lake); color:#fff; text-decoration:none; padding:12px; border-radius:12px; margin-top:16px; font-weight:600; }
+  audio { width:100%; margin-top:8px; }
+  footer { color:var(--muted); font-size:12px; text-align:center; margin-top:24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">{{kicker}}</div>
+  <h1>{{title}}</h1>
+  <div class="meta">{{date}} · {{party}}</div>
+  <div class="stats">{{stats}}</div>
+  {{summary}}
+  <ol>{{timeline}}</ol>
+  {{assumptions}}
+  {{links}}
+  <footer>杭州随身导游 Agent · 课程原型，信息以景区公告为准</footer>
+</div>
+</body>
+</html>

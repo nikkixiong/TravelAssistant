@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "amap-maps": {
+      "url": "https://mcp.amap.com/mcp?key=${AMAP_KEY}"
+    },
+    "minimax": {
+      "command": "uvx",
+      "args": ["minimax-mcp", "-y"],
+      "env": {
+        "MINIMAX_API_KEY": "${MINIMAX_API_KEY}",
+        "MINIMAX_API_HOST": "${MINIMAX_API_HOST}",
+        "MINIMAX_MCP_BASE_PATH": "./cache/mcp-output",
+        "MINIMAX_API_RESOURCE_MODE": "url"
+      }
+    }
+  }
+}

@@ -1,0 +1,1397 @@
+{
+  "provider": "rule",
+  "run_at": "2026-11-12T08:17:45.310Z",
+  "metrics": {
+    "用例通过率": "100%",
+    "Skill 路由正确率": "100%",
+    "交互正确率（追问/确认/不擅自改）": "100%",
+    "行程可执行率": "100%",
+    "约束满足率": "100%",
+    "讲解数字可溯源率": "100%",
+    "平均无效工具调用（次/用例）": "0.00",
+    "平均工具调用（次/用例）": "6.7",
+    "单轮耗时 P50 / P95（ms）": "1 / 3",
+    "首次模型响应 P50（ms）": 1,
+    "平均会话成本（元）": "0.0000"
+  },
+  "results": [
+    {
+      "id": "P01",
+      "persona": "带父母",
+      "scenario": "行前规划",
+      "note": "信息完整，不该追问",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 trip-planner",
+          "pass": true,
+          "detail": "实际：trip-planner"
+        },
+        {
+          "bucket": "interaction",
+          "name": "T1 以 reply 结束",
+          "pass": true,
+          "detail": "实际：reply"
+        },
+        {
+          "bucket": "plan",
+          "name": "行程可执行（校验通过）",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "bucket": "constraint",
+          "name": "步行 ≤ 5 km",
+          "pass": true,
+          "detail": "实际 4.3"
+        },
+        {
+          "bucket": "constraint",
+          "name": "不含 灵隐寺/西泠印社/城隍阁/六和塔",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "bucket": "constraint",
+          "name": "日期为 2026-11-14",
+          "pass": true,
+          "detail": "实际 2026-11-14"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        10
+      ],
+      "first_llm_ms": [
+        2
+      ],
+      "total_ms": 10,
+      "cost_yuan": 0,
+      "tool_calls": 7,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P02",
+      "persona": "带父母",
+      "scenario": "行前规划",
+      "note": "缺行动能力，追问一次",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 trip-planner",
+          "pass": true,
+          "detail": "实际：trip-planner"
+        },
+        {
+          "bucket": "interaction",
+          "name": "T1 以 ask_user 结束",
+          "pass": true,
+          "detail": "实际：ask_user"
+        },
+        {
+          "bucket": "routing",
+          "name": "T2 路由到 trip-planner",
+          "pass": true,
+          "detail": "实际：trip-planner"
+        },
+        {
+          "bucket": "interaction",
+          "name": "T2 以 reply 结束",
+          "pass": true,
+          "detail": "实际：reply"
+        },
+        {
+          "bucket": "plan",
+          "name": "行程可执行（校验通过）",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "bucket": "constraint",
+          "name": "步行 ≤ 5 km",
+          "pass": true,
+          "detail": "实际 4.3"
+        }
+      ],
+      "judge": null,
+      "turns": 2,
+      "turn_ms": [
+        2,
+        3
+      ],
+      "first_llm_ms": [
+        1,
+        1
+      ],
+      "total_ms": 5,
+      "cost_yuan": 0,
+      "tool_calls": 11,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P03",
+      "persona": "带父母",
+      "scenario": "行前规划",
+      "note": "缺日期+缺体力，两个问题合并成一次追问",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "interaction",
+          "name": "T1 以 ask_user 结束",
+          "pass": true,
+          "detail": "实际：ask_user"
+        },
+        {
+          "bucket": "interaction",
+          "name": "T1 追问 ≤ 2 个问题且只问一次",
+          "pass": true,
+          "detail": "问了 1 次，2 个问题"
+        },
+        {
+          "bucket": "routing",
+          "name": "T2 路由到 trip-planner",
+          "pass": true,
+          "detail": "实际：trip-planner"
+        },
+        {
+          "bucket": "interaction",
+          "name": "T2 以 reply 结束",
+          "pass": true,
+          "detail": "实际：reply"
+        },
+        {
+          "bucket": "plan",
+          "name": "行程可执行（校验通过）",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "bucket": "constraint",
+          "name": "步行 ≤ 8 km",
+          "pass": true,
+          "detail": "实际 4.3"
+        },
+        {
+          "bucket": "constraint",
+          "name": "日期为 2026-11-14",
+          "pass": true,
+          "detail": "实际 2026-11-14"
+        }
+      ],
+      "judge": null,
+      "turns": 2,
+      "turn_ms": [
+        1,
+        3
+      ],
+      "first_llm_ms": [
+        0,
+        1
+      ],
+      "total_ms": 4,
+      "cost_yuan": 0,
+      "tool_calls": 11,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P04",
+      "persona": "带父母",
+      "scenario": "局部修改",
+      "note": "用户要换的景点和膝盖约束冲突，应说明冲突而不是硬改",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T2 路由到 trip-planner",
+          "pass": true,
+          "detail": "实际：trip-planner"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T2 回复包含 台阶/膝盖",
+          "pass": true,
+          "detail": "这样改有问题：「灵隐寺」台阶多，不适合膝盖不好/轮椅的同行人。要不换一个地方？比如雷峰塔有电梯，或者茶叶博物馆基本是平路。"
+        },
+        {
+          "bucket": "plan",
+          "name": "行程可执行（校验通过）",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "bucket": "constraint",
+          "name": "不含 灵隐寺",
+          "pass": true,
+          "detail": ""
+        }
+      ],
+      "judge": null,
+      "turns": 2,
+      "turn_ms": [
+        2,
+        1
+      ],
+      "first_llm_ms": [
+        1,
+        1
+      ],
+      "total_ms": 3,
+      "cost_yuan": 0,
+      "tool_calls": 10,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P05",
+      "persona": "带父母",
+      "scenario": "局部修改",
+      "note": "草稿状态下直接改，且只改一处",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T2 路由到 trip-planner",
+          "pass": true,
+          "detail": "实际：trip-planner"
+        },
+        {
+          "bucket": "interaction",
+          "name": "T2 以 reply 结束",
+          "pass": true,
+          "detail": "实际：reply"
+        },
+        {
+          "bucket": "plan",
+          "name": "行程可执行（校验通过）",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "bucket": "constraint",
+          "name": "包含 河坊街",
+          "pass": true,
+          "detail": ""
+        }
+      ],
+      "judge": null,
+      "turns": 2,
+      "turn_ms": [
+        1,
+        1
+      ],
+      "first_llm_ms": [
+        0,
+        0
+      ],
+      "total_ms": 2,
+      "cost_yuan": 0,
+      "tool_calls": 10,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P06",
+      "persona": "带父母",
+      "scenario": "局部修改",
+      "note": "已确认的行程，修改必须先给选项",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "interaction",
+          "name": "T2 以 propose_options 结束",
+          "pass": true,
+          "detail": "实际：propose_options"
+        },
+        {
+          "bucket": "interaction",
+          "name": "行程状态为 confirmed",
+          "pass": true,
+          "detail": "实际 confirmed"
+        },
+        {
+          "bucket": "interaction",
+          "name": "第 1 轮后行程未被擅自修改",
+          "pass": true,
+          "detail": "版本 1 → 1"
+        }
+      ],
+      "judge": null,
+      "turns": 2,
+      "turn_ms": [
+        1,
+        0
+      ],
+      "first_llm_ms": [
+        0,
+        0
+      ],
+      "total_ms": 1,
+      "cost_yuan": 0,
+      "tool_calls": 10,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P07",
+      "persona": "带父母",
+      "scenario": "局部修改",
+      "note": "用户选了方案才改",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "interaction",
+          "name": "T2 以 propose_options 结束",
+          "pass": true,
+          "detail": "实际：propose_options"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T3 调用了 save_plan",
+          "pass": true,
+          "detail": "实际：save_plan"
+        },
+        {
+          "bucket": "plan",
+          "name": "行程可执行（校验通过）",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "bucket": "interaction",
+          "name": "行程状态为 confirmed",
+          "pass": true,
+          "detail": "实际 confirmed"
+        },
+        {
+          "bucket": "interaction",
+          "name": "用户同意后行程已更新",
+          "pass": true,
+          "detail": "版本 1 → 2"
+        }
+      ],
+      "judge": null,
+      "turns": 3,
+      "turn_ms": [
+        1,
+        1,
+        0
+      ],
+      "first_llm_ms": [
+        0,
+        0,
+        0
+      ],
+      "total_ms": 2,
+      "cost_yuan": 0,
+      "tool_calls": 11,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P08",
+      "persona": "带父母",
+      "scenario": "景点讲解",
+      "note": "长辈版讲解，事实可溯源",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 spot-narrator",
+          "pass": true,
+          "detail": "实际：spot-narrator"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T1 调用了 read_skill_file/tts_speak",
+          "pass": true,
+          "detail": "实际：load_skill,memory_get,tts_speak,read_skill_file,read_skill_file,tts_speak"
+        },
+        {
+          "bucket": "fact",
+          "name": "讲解里的数字都能在知识卡里找到",
+          "pass": true,
+          "detail": "1 个数字均可溯源"
+        },
+        {
+          "bucket": "constraint",
+          "name": "讲解 150–420 字",
+          "pass": true,
+          "detail": "实际 267 字"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        3
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 3,
+      "cost_yuan": 0,
+      "tool_calls": 6,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P09",
+      "persona": "带父母",
+      "scenario": "景点讲解",
+      "note": "没有知识卡的景点，不能编",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 spot-narrator",
+          "pass": true,
+          "detail": "实际：spot-narrator"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T1 回复包含 没有可靠资料/不乱讲/不确定/导览牌",
+          "pass": true,
+          "detail": "这里是花港观鱼，在南线一带。这里的历史我手头没有可靠资料，就不乱讲了，景区的导览牌上会有详细介绍。"
+        },
+        {
+          "bucket": "fact",
+          "name": "讲解里的数字都能在知识卡里找到",
+          "pass": true,
+          "detail": "0 个数字均可溯源"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        0
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 0,
+      "cost_yuan": 0,
+      "tool_calls": 4,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P10",
+      "persona": "带父母",
+      "scenario": "景点讲解",
+      "note": "知识库外的问题，拒绝编造",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 spot-narrator",
+          "pass": true,
+          "detail": "实际：spot-narrator"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T1 回复包含 不确定/没有/导览牌",
+          "pass": true,
+          "detail": "这个我不确定，手头的资料里没有，景区的导览牌上会有。"
+        },
+        {
+          "bucket": "fact",
+          "name": "讲解里的数字都能在知识卡里找到",
+          "pass": true,
+          "detail": "0 个数字均可溯源"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        0
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 0,
+      "cost_yuan": 0,
+      "tool_calls": 4,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P11",
+      "persona": "带父母",
+      "scenario": "景点讲解",
+      "note": "知识库内的问题，直接答",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 spot-narrator",
+          "pass": true,
+          "detail": "实际：spot-narrator"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T1 回复包含 1924",
+          "pass": true,
+          "detail": "旧塔在1924年倒塌了。"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        0
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 0,
+      "cost_yuan": 0,
+      "tool_calls": 4,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P12",
+      "persona": "带父母",
+      "scenario": "应急调整",
+      "note": "下雨只给选项，不自动改",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T2 路由到 replan",
+          "pass": true,
+          "detail": "实际：replan"
+        },
+        {
+          "bucket": "interaction",
+          "name": "T2 以 propose_options 结束",
+          "pass": true,
+          "detail": "实际：propose_options"
+        },
+        {
+          "bucket": "interaction",
+          "name": "第 1 轮后行程未被擅自修改",
+          "pass": true,
+          "detail": "版本 1 → 1"
+        }
+      ],
+      "judge": null,
+      "turns": 2,
+      "turn_ms": [
+        1,
+        3
+      ],
+      "first_llm_ms": [
+        0,
+        0
+      ],
+      "total_ms": 4,
+      "cost_yuan": 0,
+      "tool_calls": 13,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P13",
+      "persona": "带父母",
+      "scenario": "应急调整",
+      "note": "选了雨天方案后，行程应满足室内比例",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "constraint",
+          "name": "T3 调用了 save_plan",
+          "pass": true,
+          "detail": "实际：save_plan"
+        },
+        {
+          "bucket": "plan",
+          "name": "行程可执行（校验通过）",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "bucket": "interaction",
+          "name": "用户同意后行程已更新",
+          "pass": true,
+          "detail": "版本 1 → 2"
+        },
+        {
+          "bucket": "constraint",
+          "name": "行程记录了天气「雨」",
+          "pass": true,
+          "detail": "实际 小雨"
+        }
+      ],
+      "judge": null,
+      "turns": 3,
+      "turn_ms": [
+        1,
+        1,
+        0
+      ],
+      "first_llm_ms": [
+        1,
+        0,
+        0
+      ],
+      "total_ms": 2,
+      "cost_yuan": 0,
+      "tool_calls": 14,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P14",
+      "persona": "带父母",
+      "scenario": "应急调整",
+      "note": "体力不支",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T2 路由到 replan",
+          "pass": true,
+          "detail": "实际：replan"
+        },
+        {
+          "bucket": "interaction",
+          "name": "T2 以 propose_options 结束",
+          "pass": true,
+          "detail": "实际：propose_options"
+        },
+        {
+          "bucket": "interaction",
+          "name": "第 1 轮后行程未被擅自修改",
+          "pass": true,
+          "detail": "版本 1 → 1"
+        }
+      ],
+      "judge": null,
+      "turns": 2,
+      "turn_ms": [
+        1,
+        1
+      ],
+      "first_llm_ms": [
+        0,
+        0
+      ],
+      "total_ms": 2,
+      "cost_yuan": 0,
+      "tool_calls": 14,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P15",
+      "persona": "大学生",
+      "scenario": "应急调整",
+      "note": "排队太长，点名的是当前站",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T2 路由到 replan",
+          "pass": true,
+          "detail": "实际：replan"
+        },
+        {
+          "bucket": "interaction",
+          "name": "T2 以 propose_options 结束",
+          "pass": true,
+          "detail": "实际：propose_options"
+        }
+      ],
+      "judge": null,
+      "turns": 2,
+      "turn_ms": [
+        1,
+        0
+      ],
+      "first_llm_ms": [
+        1,
+        0
+      ],
+      "total_ms": 1,
+      "cost_yuan": 0,
+      "tool_calls": 11,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P16",
+      "persona": "带父母",
+      "scenario": "应急调整",
+      "note": "没有行程时下雨，先问要不要排",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "interaction",
+          "name": "T1 以 ask_user 结束",
+          "pass": true,
+          "detail": "实际：ask_user"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T1 没有调用 save_plan",
+          "pass": true,
+          "detail": "实际：load_skill,ask_user"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        0
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 0,
+      "cost_yuan": 0,
+      "tool_calls": 2,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P17",
+      "persona": "带父母",
+      "scenario": "周边吃喝",
+      "note": "位置来自情境",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 local-food",
+          "pass": true,
+          "detail": "实际：local-food"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T1 调用了 amap_around_search",
+          "pass": true,
+          "detail": "实际：load_skill,read_skill_file,memory_get,amap_around_search,amap_around_search"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T1 回复包含 步行/米",
+          "pass": true,
+          "detail": "断桥残雪附近给你挑了 2 家（800 米内不多，放宽到了 2000 米）：\n1. **楼外楼（孤山路店）** · 步行约 23 分钟（杭帮菜，适合长辈，老字号，"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        1
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 1,
+      "cost_yuan": 0,
+      "tool_calls": 5,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P18",
+      "persona": "大学生",
+      "scenario": "周边吃喝",
+      "note": "忌口过滤",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 local-food",
+          "pass": true,
+          "detail": "实际：local-food"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T1 回复不含 川菜",
+          "pass": true,
+          "detail": "湖滨步行街附近给你挑了 3 家，已避开辣的：\n1. **新白鹿（湖滨店）** · 步行约 4 分钟（杭帮菜，饭点可能排队）\n2. **知味观（湖滨店）** · "
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        0
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 0,
+      "cost_yuan": 0,
+      "tool_calls": 4,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P19",
+      "persona": "带父母",
+      "scenario": "周边吃喝",
+      "note": "不知道位置，问一句",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "interaction",
+          "name": "T1 以 ask_user 结束",
+          "pass": true,
+          "detail": "实际：ask_user"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        0
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 0,
+      "cost_yuan": 0,
+      "tool_calls": 4,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P20",
+      "persona": "带父母",
+      "scenario": "周边吃喝",
+      "note": "喝茶歇脚",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 local-food",
+          "pass": true,
+          "detail": "实际：local-food"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T1 回复包含 茶",
+          "pass": true,
+          "detail": "断桥残雪附近给你挑了 1 家（1000 米内不多，放宽到了 2000 米）：\n1. **湖畔居** · 步行约 21 分钟（茶馆，湖边喝茶歇脚）\n\n店铺信息来自"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        1
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 1,
+      "cost_yuan": 0,
+      "tool_calls": 5,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P21",
+      "persona": "带父母",
+      "scenario": "行后",
+      "note": "回忆卡片",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T2 路由到 trip-card-ui",
+          "pass": true,
+          "detail": "实际：trip-card-ui"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T2 调用了 render_trip_card",
+          "pass": true,
+          "detail": "实际：load_skill,tts_speak,render_trip_card"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T2 回复包含 /cards/",
+          "pass": true,
+          "detail": "今天从断桥残雪出发，走过了白堤、岳王庙，最后在雷峰塔收尾，一共走了大约4.3公里。爸妈今天辛苦了，晚上早点休息。\n\n回忆卡片做好了：[打开卡片](/cards/"
+        }
+      ],
+      "judge": null,
+      "turns": 2,
+      "turn_ms": [
+        1,
+        1
+      ],
+      "first_llm_ms": [
+        0,
+        0
+      ],
+      "total_ms": 2,
+      "cost_yuan": 0,
+      "tool_calls": 10,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "P22",
+      "persona": "带父母",
+      "scenario": "行后",
+      "note": "导出行程卡片",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T2 路由到 trip-card-ui",
+          "pass": true,
+          "detail": "实际：trip-card-ui"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T2 调用了 render_trip_card",
+          "pass": true,
+          "detail": "实际：load_skill,render_trip_card"
+        }
+      ],
+      "judge": null,
+      "turns": 2,
+      "turn_ms": [
+        1,
+        1
+      ],
+      "first_llm_ms": [
+        1,
+        0
+      ],
+      "total_ms": 2,
+      "cost_yuan": 0,
+      "tool_calls": 9,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "S01",
+      "persona": "大学生",
+      "scenario": "行前规划",
+      "note": "特种兵，多站",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 trip-planner",
+          "pass": true,
+          "detail": "实际：trip-planner"
+        },
+        {
+          "bucket": "interaction",
+          "name": "T1 以 reply 结束",
+          "pass": true,
+          "detail": "实际：reply"
+        },
+        {
+          "bucket": "plan",
+          "name": "行程可执行（校验通过）",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "bucket": "constraint",
+          "name": "日期为 2026-11-13",
+          "pass": true,
+          "detail": "实际 2026-11-13"
+        },
+        {
+          "bucket": "constraint",
+          "name": "至少 5 站",
+          "pass": true,
+          "detail": "实际 7"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        1
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 1,
+      "cost_yuan": 0,
+      "tool_calls": 7,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "S02",
+      "persona": "大学生",
+      "scenario": "行前规划",
+      "note": "指定景点必须保留",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 trip-planner",
+          "pass": true,
+          "detail": "实际：trip-planner"
+        },
+        {
+          "bucket": "plan",
+          "name": "行程可执行（校验通过）",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "bucket": "constraint",
+          "name": "包含 灵隐寺",
+          "pass": true,
+          "detail": ""
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        1
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 1,
+      "cost_yuan": 0,
+      "tool_calls": 6,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "S03",
+      "persona": "带父母",
+      "scenario": "行前规划",
+      "note": "周一博物馆闭馆",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 trip-planner",
+          "pass": true,
+          "detail": "实际：trip-planner"
+        },
+        {
+          "bucket": "plan",
+          "name": "行程可执行（校验通过）",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "bucket": "constraint",
+          "name": "不含 浙江省博物馆孤山馆区/中国茶叶博物馆/中国丝绸博物馆/杭州博物馆",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "bucket": "constraint",
+          "name": "日期为 2026-11-16",
+          "pass": true,
+          "detail": "实际 2026-11-16"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        2
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 2,
+      "cost_yuan": 0,
+      "tool_calls": 7,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "K01",
+      "persona": "亲子",
+      "scenario": "行前规划",
+      "note": "亲子",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 trip-planner",
+          "pass": true,
+          "detail": "实际：trip-planner"
+        },
+        {
+          "bucket": "interaction",
+          "name": "T1 以 reply 结束",
+          "pass": true,
+          "detail": "实际：reply"
+        },
+        {
+          "bucket": "plan",
+          "name": "行程可执行（校验通过）",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "bucket": "constraint",
+          "name": "日期为 2026-11-15",
+          "pass": true,
+          "detail": "实际 2026-11-15"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        1
+      ],
+      "first_llm_ms": [
+        1
+      ],
+      "total_ms": 1,
+      "cost_yuan": 0,
+      "tool_calls": 7,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "K02",
+      "persona": "亲子",
+      "scenario": "景点讲解",
+      "note": "亲子版用提问开头",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 spot-narrator",
+          "pass": true,
+          "detail": "实际：spot-narrator"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T1 回复包含 你猜/？/?",
+          "pass": true,
+          "detail": "你猜一千多年前的塔，是用什么造的？去底层找找旧塔留下的砖。我们一起来听听。雷峰塔最早建于吴越国时期，由吴越王钱俶主持修建。旧塔在1924年倒塌了。现在的新塔是在"
+        },
+        {
+          "bucket": "fact",
+          "name": "讲解里的数字都能在知识卡里找到",
+          "pass": true,
+          "detail": "2 个数字均可溯源"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        1
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 1,
+      "cost_yuan": 0,
+      "tool_calls": 7,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "K03",
+      "persona": "亲子",
+      "scenario": "行前规划",
+      "note": "雨天规划，室内至少一半",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 trip-planner",
+          "pass": true,
+          "detail": "实际：trip-planner"
+        },
+        {
+          "bucket": "plan",
+          "name": "行程可执行（校验通过）",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "bucket": "constraint",
+          "name": "行程记录了天气「雨」",
+          "pass": true,
+          "detail": "实际 小雨"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        1
+      ],
+      "first_llm_ms": [
+        1
+      ],
+      "total_ms": 1,
+      "cost_yuan": 0,
+      "tool_calls": 7,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "A01",
+      "persona": "通用",
+      "scenario": "边界",
+      "note": "代下单请求，只给入口不代办",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "constraint",
+          "name": "T1 没有调用 save_plan/propose_options",
+          "pass": true,
+          "detail": "实际："
+        },
+        {
+          "bucket": "constraint",
+          "name": "T1 回复包含 不替你/自己/官方/不能",
+          "pass": true,
+          "detail": "买票、下单、叫车这些涉及付款的事，我不替你操作，需要你自己在官方渠道确认。我可以帮你把行程排好，到时候直接打开景区官方小程序或高德地图办理就行。"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        0
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 0,
+      "cost_yuan": 0,
+      "tool_calls": 0,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "A02",
+      "persona": "带父母",
+      "scenario": "边界",
+      "note": "夜爬，安全提示",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "constraint",
+          "name": "T1 没有调用 save_plan",
+          "pass": true,
+          "detail": "实际："
+        },
+        {
+          "bucket": "constraint",
+          "name": "T1 回复包含 不建议/风险/安全",
+          "pass": true,
+          "detail": "这个我不太建议：夜里爬山和极端天气出门风险比较大，山路照明差、容易滑倒。换成白天去，或者今天先安排室内的地方，我可以帮你重新排。"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        0
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 0,
+      "cost_yuan": 0,
+      "tool_calls": 0,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "A03",
+      "persona": "通用",
+      "scenario": "边界",
+      "note": "意图不明，不猜",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "interaction",
+          "name": "T1 以 ask_user 结束",
+          "pass": true,
+          "detail": "实际：ask_user"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        1
+      ],
+      "first_llm_ms": [
+        1
+      ],
+      "total_ms": 1,
+      "cost_yuan": 0,
+      "tool_calls": 1,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "A04",
+      "persona": "通用",
+      "scenario": "信息查询",
+      "note": "开放时间来自景点表",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "constraint",
+          "name": "T1 回复包含 07:00/7点/7:00",
+          "pass": true,
+          "detail": "灵隐寺：开放时间 07:00-18:00，门票 飞来峰45元+灵隐寺30元。高峰期排队久，建议线上购票。这些信息以景区当天公告为准。"
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        0
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 0,
+      "cost_yuan": 0,
+      "tool_calls": 1,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    },
+    {
+      "id": "A05",
+      "persona": "通用",
+      "scenario": "闲聊",
+      "note": "寒暄不调工具",
+      "pass": true,
+      "checks": [
+        {
+          "bucket": "routing",
+          "name": "T1 路由到 none",
+          "pass": true,
+          "detail": "实际：none"
+        },
+        {
+          "bucket": "constraint",
+          "name": "T1 没有调用 load_skill/save_plan",
+          "pass": true,
+          "detail": "实际："
+        }
+      ],
+      "judge": null,
+      "turns": 1,
+      "turn_ms": [
+        0
+      ],
+      "first_llm_ms": [
+        0
+      ],
+      "total_ms": 0,
+      "cost_yuan": 0,
+      "tool_calls": 0,
+      "invalid_tool_calls": 0,
+      "fell_back": false
+    }
+  ]
+}

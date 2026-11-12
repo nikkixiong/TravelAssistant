@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>杭州随身导游</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">游</span>
+      <div>
+        <div class="brand-name">杭州随身导游</div>
+        <div class="brand-sub">行前排行程 · 行中边走边讲、随时改计划</div>
+      </div>
+    </div>
+    <div class="badges" id="badges"></div>
+    <button class="ghost" id="newSession" title="清空对话，重新开始">新对话</button>
+  </header>
+
+  <main class="layout">
+    <section class="chat" aria-label="对话">
+      <div class="messages" id="messages">
+        <div class="welcome" id="welcome">
+          <h1>一句话说需求，剩下的交给我</h1>
+          <p>我会查高德的景点、路线和天气，按导游经验排行程；到了景点给你讲解，下雨、累了随时帮你改。</p>
+          <div class="starter" id="starters"></div>
+        </div>
+      </div>
+
+      <details class="sim" id="sim">
+        <summary>行中模拟器 <span class="sim-hint">模拟你此刻在哪、几点、天气如何</span></summary>
+        <div class="sim-row">
+          <label>位置<select id="ctxLocation"><option value="">未知</option></select></label>
+          <label>时间<input type="time" id="ctxTime" /></label>
+          <label>天气<select id="ctxWeather"><option value="">按预报</option><option>小雨</option><option>大雨</option><option>晴，很晒</option></select></label>
+        </div>
+        <div class="sim-row quick" id="inTrip"></div>
+      </details>
+
+      <form class="composer" id="composer">
+        <button type="button" class="icon" id="mic" title="语音输入" aria-label="语音输入">🎙</button>
+        <input id="input" autocomplete="off" placeholder="比如：周六带爸妈玩一天西湖，我妈膝盖不好" />
+        <button type="submit" class="primary" id="send">发送</button>
+      </form>
+    </section>
+
+    <aside class="panel" aria-label="行程与调试">
+      <nav class="tabs" role="tablist">
+        <button role="tab" class="tab active" data-tab="plan">行程</button>
+        <button role="tab" class="tab" data-tab="trace">调用链路</button>
+        <button role="tab" class="tab" data-tab="memory">偏好记忆</button>
+      </nav>
+      <div class="tabpane active" id="tab-plan"><div class="empty">还没有行程。在左边说一句需求试试。</div></div>
+      <div class="tabpane" id="tab-trace"><div class="empty">每一轮对话的 Skill、工具调用、耗时和成本会记录在这里。</div></div>
+      <div class="tabpane" id="tab-memory"></div>
+    </aside>
+  </main>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
